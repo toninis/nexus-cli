@@ -18,7 +18,8 @@ def pretty_print(json_body):
 def main():
     nexusClient = nexusHandler()
     loggerInit(nexusClient.debug)
-    logger.info(nexusClient.listComponents())
+    logger.info(pretty_print(nexusClient.listTags('atr/atr-st2scheduler')))
+    logger.info(pretty_print(nexusClient.getManifest('atr/atr-st2scheduler','3.0dev')))
 
 if __name__ == '__main__':
     main()
