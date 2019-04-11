@@ -1,22 +1,18 @@
 import requests
 import logging
 from parser import argParser
-
-class Images(object):
-    """docstring for Images."""
-
-    def __init__(self, arg):
-        super(Images, self).__init__()
-        self.arg = arg
-
+from logger import loggerInit
 
 class nexusHandler(argParser):
     """docstring for nexusHandler."""
 
     def __init__(self):
-        super(nexusHandler, self).__init__()
+        super().__init__()
+        loggerInit(self.debug)
         self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
         self.api_version = 'v1'
+        self.status_endpoint = '{}/service/rest/{}/status'.format(self.base_url,self.api_version)
+        self.status_check()
         self.component_url = '{}/service/rest/{}/components'.format(self.base_url,self.api_version)
         self.assets_url = '{}/service/rest/{}/assets'.format(self.base_url,self.api_version)
         self.repos_url = '{}/repository/{}/v2/_catalog'.format(self.base_url,self.repository)
@@ -30,9 +26,9 @@ class nexusHandler(argParser):
         if self.__imageExists(image):
             __tags_url = '{}/repository/{}/v2/{}/tags/list'.format(self.base_url,self.repository,image)
             try:
-                return requests.get(__tags_url,verify=self.verify).json()['tags']
+                return requests.get(__tags_url,verify=self.secure).json()['tags']
             except Exception as e:
-                self.logger.error('Could not fetch repos.\nError: {}'.format(str(e)))
+                self.logger.error('Could not fetch tags.\nError: {}'.format(str(e)))
         else:
             self.logger.error('Image should be one of {}\n'.format(self.repos))
 
@@ -43,11 +39,19 @@ class nexusHandler(argParser):
         if self.__imageExists(image):
             return True if tag in self.listTags(image) else False
 
+    def status_check(self):
+        try:
+            res = requests.get(self.status_endpoint,verify=self.secure)
+            if res.status_code != 200:
+                raise Exception('Config is wrong or {} is unreachable.\nError: {}'.format(self.base_url,str(res.reason)))
+        except Exception as e:
+            raise Exception('Config is wrong or {} is unreachable.\nError: {}'.format(self.base_url,str(e)))
+
     def getManifest(self,image,tag):
         if self.__tagExists(image, tag):
             __manifest_url = '{}/repository/{}/v2/{}/manifests/{}'.format(self.base_url,self.repository,image,tag)
             try:
-                return requests.get(__manifest_url,verify=self.verify).json()
+                return requests.get(__manifest_url,verify=self.secure).json()
             except Exception as e:
                 self.logger.error('Image should be one of {}\n. Error: {}'.format(self.repos,str(e)))
         else:
@@ -56,20 +60,20 @@ class nexusHandler(argParser):
 
     def listRepos(self):
         try:
-            res = requests.get(self.repos_url,verify=self.verify).json()
-            self.repos = res['repositories']
+            res = requests.get(self.repos_url,verify=self.secure)
+            self.repos = res.json()['repositories']
             return self.repos
         except Exception as e:
             self.logger.error('Could not fetch repos.\nError: {}'.format(str(e)))
 
     def listComponents(self,all=True):
         try:
-            res = requests.get(self.component_url,params=self.__params,verify=self.verify).json()
+            res = requests.get(self.component_url,params=self.__params,verify=self.secure).json()
             for item in res['items']:
                 self.components.append(item)
             while res['continuationToken']:
                 self.__params['continuationToken'] = res['continuationToken']
-                res = requests.get(self.component_url,params=self.__params,verify=self.verify).json()
+                res = requests.get(self.component_url,params=self.__params,verify=self.secure).json()
                 for item in res['items']:
                     self.components.append(item)
             return self.components
