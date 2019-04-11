@@ -85,4 +85,3 @@ class BaseConfig(FileConfig):
         self.proto = os.getenv('NEXUS_PROTO', self['config']['proto'])
         self.repository = os.getenv('NEXUS_REPO', self['config']['repository'])
         self.secure = strtobool(os.getenv('NEXUS_TLS')) if os.getenv('NEXUS_TLS') else self['config'].getboolean('secure')
-        # self.secure = strtobool(os.getenv('NEXUS_TLS', self['config'].getboolean('secure')))

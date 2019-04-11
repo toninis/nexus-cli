@@ -1,15 +1,15 @@
 import requests
 import logging
-from parser import argParser
-from logger import loggerInit
 
-class nexusHandler(argParser):
+class nexusHandler:
     """docstring for nexusHandler."""
 
-    def __init__(self):
+    def __init__(self,parsedArgs):
         super().__init__()
-        loggerInit(self.debug)
         self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
+        self.__dict__.update(parsedArgs.__dict__)
+        self.base_url = '{}://{}:{}'.format(self.proto,self.host,self.port) if self.port \
+            else '{}://{}'.format(self.proto,self.host)
         self.api_version = 'v1'
         self.status_endpoint = '{}/service/rest/{}/status'.format(self.base_url,self.api_version)
         self.status_check()
@@ -42,6 +42,7 @@ class nexusHandler(argParser):
     def status_check(self):
         try:
             res = requests.get(self.status_endpoint,verify=self.secure)
+            self.logger.info('Configuration is valid!')
             if res.status_code != 200:
                 raise Exception('Config is wrong or {} is unreachable.\nError: {}'.format(self.base_url,str(res.reason)))
         except Exception as e:

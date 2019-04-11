@@ -1,6 +1,8 @@
 import argparse
 import logging
 from config import BaseConfig
+# from httpHandler import nexusHandler
+from logger import loggerInit
 
 class argParser(BaseConfig):
     """docstring for argParser."""
@@ -9,34 +11,45 @@ class argParser(BaseConfig):
         super().__init__()
         self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
         self.__run()
-        self.base_url = '{}://{}:{}'.format(self.proto,self.host,self.port) if self.port \
-            else '{}://{}'.format(self.proto,self.host)
+        loggerInit(self.debug)
 
     def __run(self):
         """Argument Parser"""
 
-        argparser = argparse.ArgumentParser(
+        global_parser = argparse.ArgumentParser(
             formatter_class=argparse.RawTextHelpFormatter,
             description='Python application to manipulate nexus artifacts.'
         )
 
-        subparsers = argparser.add_subparsers(
+        subparsers = global_parser.add_subparsers(
             title='Available sub-commands',
             dest='subcommand'
+            # help='sub-command help'
         )
 
-        config_parser = subparsers.add_parser('config',help='Generate Configuration file',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        global_parser.add_argument('--debug', help='Enable Debug Logging...' , action='store_true')
+        global_parser.add_argument('--host', help='Nexus Host')
+        global_parser.add_argument('--port', help='Nexus Port')
+        global_parser.add_argument('--repository', help='Nexus repository')
+        global_parser.add_argument('--insecure','-k', help='Do not verify TLS cert', action='store_true')
+
+        help_parser = subparsers.add_parser('help')
+
+        config_parser = subparsers.add_parser('config',help='Configuration file parser')
         config_parser.add_argument('--update',help='Update existing config', action='store_true')
-        argparser.add_argument('--debug', help='Enable Debug Logging...' , action='store_true')
-        argparser.add_argument('--host', help='Nexus Host')
-        argparser.add_argument('--port', help='Nexus Port')
-        argparser.add_argument('--repository', help='Nexus repository')
-        argparser.add_argument('--insecure','-k', help='Do not verify TLS cert', action='store_true')
 
-        if vars(argparser.parse_args())['subcommand']:
-            self.generateConfig(update=vars(argparser.parse_args())['update'])
+        listRepos_parser = subparsers.add_parser('list-repos',help='List repos')
 
-        for key,value in vars(argparser.parse_args()).items():
+        tags_parser = subparsers.add_parser('list-tags',help='List tags')
+        tags_parser.add_argument('--repo',help='Specific repo',required=True)
+
+        if not vars(global_parser.parse_args())['subcommand'] or vars(global_parser.parse_args())['subcommand'] == 'help':
+            global_parser.parse_args(['--help'])
+
+        if vars(global_parser.parse_args())['subcommand'] == 'config':
+            self.generateConfig(update=vars(global_parser.parse_args())['update'])
+
+        for key,value in vars(global_parser.parse_args()).items():
             if value is not None:
                 setattr(self, key, value)
 

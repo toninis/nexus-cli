@@ -2,9 +2,10 @@ import logging
 import sys
 import os
 import json
+from parser import argParser
 
-# import warnings
-# warnings.filterwarnings("ignore")
+import warnings
+warnings.filterwarnings("ignore")
 
 from httpHandler import nexusHandler
 
@@ -17,9 +18,11 @@ def pretty_print(json_body):
     return json.dumps(json_body, indent=2, separators=(',', ': '))
 
 def main():
-    nexusClient = nexusHandler()
-    logger.info(pretty_print(nexusClient.listTags('atr/atr-st2scheduler')))
-    # logger.info(pretty_print(nexusClient.getManifest('atr/atr-st2scheduler','3.0dev')))
+    args = argParser()
+    nexusClient = nexusHandler(args)
+
+    if args.subcommand == 'list-repos':
+        print(nexusClient.listRepos())
 
 if __name__ == '__main__':
     main()
