@@ -22,7 +22,18 @@ def main():
     nexusClient = nexusHandler(args)
 
     if args.subcommand == 'list-repos':
-        print(nexusClient.listRepos())
+        print('Available Repos:')
+        for i in nexusClient.listRepos():
+            print('\t'+i)
+    elif args.subcommand == 'list-tags':
+        print('Available Tags for {}:'.format(args.repo))
+        for i in nexusClient.listTags(args.repo):
+            print('\t'+i)
+    elif args.subcommand == 'get':
+        print(nexusClient.deleteImage(args.repo, args.tag))
+        print(nexusClient.getImageDigest(args.repo, args.tag))
+        print(nexusClient.searchAsset(args.repo, args.tag))
+        # print(nexusClient.getManifest(args.repo, args.tag))
 
 if __name__ == '__main__':
     main()

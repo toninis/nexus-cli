@@ -1,7 +1,6 @@
 import argparse
 import logging
 from config import BaseConfig
-# from httpHandler import nexusHandler
 from logger import loggerInit
 
 class argParser(BaseConfig):
@@ -42,6 +41,10 @@ class argParser(BaseConfig):
 
         tags_parser = subparsers.add_parser('list-tags',help='List tags')
         tags_parser.add_argument('--repo',help='Specific repo',required=True)
+
+        get_parser = subparsers.add_parser('get',help='Get manifest')
+        get_parser.add_argument('--repo',help='Specific repo',required=True)
+        get_parser.add_argument('--tag',help='Specific tag',required=True)
 
         if not vars(global_parser.parse_args())['subcommand'] or vars(global_parser.parse_args())['subcommand'] == 'help':
             global_parser.parse_args(['--help'])
