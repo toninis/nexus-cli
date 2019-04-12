@@ -29,11 +29,18 @@ def main():
         print('Available Tags for {}:'.format(args.repo))
         for i in nexusClient.listTags(args.repo):
             print('\t'+i)
-    elif args.subcommand == 'get':
-        print(nexusClient.deleteImage(args.repo, args.tag))
-        print(nexusClient.getImageDigest(args.repo, args.tag))
-        print(nexusClient.searchAsset(args.repo, args.tag))
-        # print(nexusClient.getManifest(args.repo, args.tag))
+    elif args.subcommand == 'get-component':
+        print(pretty_print(nexusClient.searchComponent(args.repo, args.tag)))
+    elif args.subcommand == 'delete':
+        if args.all:
+            nexusClient.deleteAllImages(args.repo)
+        elif args.regex:
+            nexusClient.deleteRegexImages(args.repo, args.regex)
+        elif args.tag:
+            nexusClient.deleteImage(args.repo, args.tag)
+    elif args.subcommand == 'search':
+        print(pretty_print(nexusClient.searchComponent(args.repo, args.tag)))
+
 
 if __name__ == '__main__':
     main()

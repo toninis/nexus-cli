@@ -42,9 +42,20 @@ class argParser(BaseConfig):
         tags_parser = subparsers.add_parser('list-tags',help='List tags')
         tags_parser.add_argument('--repo',help='Specific repo',required=True)
 
-        get_parser = subparsers.add_parser('get',help='Get manifest')
+        get_parser = subparsers.add_parser('get-component',help='Get manifest')
         get_parser.add_argument('--repo',help='Specific repo',required=True)
         get_parser.add_argument('--tag',help='Specific tag',required=True)
+
+        search_parser = subparsers.add_parser('search',help='Search Image')
+        search_parser.add_argument('--repo',help='Specific repo',required=True)
+        search_parser.add_argument('--tag',help='Specific tag',required=True)
+
+        delete_parser = subparsers.add_parser('delete',help='Delete Image')
+        delete_parser.add_argument('--repo',help='Specific repo',required=True)
+        group_delete_parser = delete_parser.add_mutually_exclusive_group(required=True)
+        group_delete_parser.add_argument('--tag',help='Specific tag')
+        group_delete_parser.add_argument('--all',help='All tags',action='store_true')
+        group_delete_parser.add_argument('--regex',help='Remove by regex')
 
         if not vars(global_parser.parse_args())['subcommand'] or vars(global_parser.parse_args())['subcommand'] == 'help':
             global_parser.parse_args(['--help'])
