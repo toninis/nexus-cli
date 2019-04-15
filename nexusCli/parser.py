@@ -1,7 +1,7 @@
 import argparse
 import logging
-from config import BaseConfig
-from logger import loggerInit
+from .config import BaseConfig
+from .logger import loggerInit
 
 class argParser(BaseConfig):
     """docstring for argParser."""

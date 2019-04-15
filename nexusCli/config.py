@@ -5,7 +5,7 @@ import base64
 from getpass import getpass
 from configparser import ConfigParser
 from pathlib import Path
-from logger import loggerInit , preInit
+from .logger import loggerInit , preInit
 from distutils.util import strtobool
 
 logger = logging.getLogger(__name__)

@@ -2,12 +2,12 @@ import logging
 import sys
 import os
 import json
-from parser import argParser
+from .parser import argParser
 
 import warnings
 warnings.filterwarnings("ignore")
 
-from httpHandler import nexusHandler
+from .httpHandler import nexusHandler
 
 logger = logging.getLogger(__name__)
 

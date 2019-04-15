@@ -28,19 +28,10 @@ setup(
     long_description=get_long_description(),
     install_requires=get_requirements_from_file("requirements.txt"),
     packages=find_packages(),
-    package_dir={
-        'package': 'src/package'
-        },
-    package_data={
-        'package': [
-            'templates/*.j2'
-            ]
-        },
     zip_safe=True,
-    include_package_data=True,
     entry_points={
         "console_scripts": [
-            "encode-cli = package.createpackage:main"
+            "nexusCli = nexusCli.manage:main"
         ]
     }
 )
