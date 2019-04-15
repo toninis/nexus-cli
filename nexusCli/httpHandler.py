@@ -3,7 +3,10 @@ import logging
 import sys
 import base64
 import re
+import json
+import threading
 from requests.auth import HTTPBasicAuth
+
 
 def user_verification():
     reply = str(input('Are you sure ?? (yes/no) : '))
@@ -18,9 +21,9 @@ def user_verification():
 class nexusHandler:
     """docstring for nexusHandler."""
 
-    def __init__(self,parsedArgs):
+    def __init__(self,parsedArgs,image=None):
         super().__init__()
-        self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
+        self.__logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
         self.__dict__.update(parsedArgs.__dict__)
 
         self.__user = base64.b64decode(self.auth).decode('utf-8').split(':')[0]
@@ -46,7 +49,9 @@ class nexusHandler:
         }
 
         self.components = []
-        self.repos = []
+        self.available_repos = self.__listRepos()
+        self.__available_tags = []
+        # self.__tags_with_date = {}
 
     def deleteImageByDigest(self,image,tag):
         try:
@@ -56,11 +61,20 @@ class nexusHandler:
         except Exception as e:
             raise
 
+    def __getCreationDate(self,image,tag):
+        try:
+            __docker_image_manifest = self.getManifest(image, tag)
+            __image_creation_date = json.loads(__docker_image_manifest['history'][0]['v1Compatibility'])
+            return __image_creation_date['created']
+        except Exception as e:
+            raise Exception('Could not parse reponse: {} . \nError: {}'.format(__docker_image_manifest,str(e)))
+
     def deleteAllImages(self,image):
         __available_tags = self.listTags(image)
         print('WARNING Images to be deleted:')
         for tag in __available_tags:
             print('\t'+tag)
+        print('WARNING You are going to delete the above {} images.'.format(len(__available_tags)))
         user_verification()
         for tag in __available_tags:
             self.deleteImage(image, tag)
@@ -76,7 +90,7 @@ class nexusHandler:
         print('WARNING Images to be deleted:')
         for tag in __tags_to_remove:
             print('\t'+tag)
-
+        print('WARNING You are going to delete the above {} images.'.format(len(__tags_to_remove)))
         user_verification()
 
         for tag in __tags_to_remove:
@@ -88,7 +102,7 @@ class nexusHandler:
             self.__delete_component_url = '{}/service/rest/{}/components/{}'.format(self.base_url,self.api_version,__component_id)
             res = requests.delete(self.__delete_component_url,verify=self.secure,auth=self.__auth)
             if res.raise_for_status() is None:
-                self.logger.info('{}:{} deleted successfully!'.format(image,tag))
+                self.__logger.info('{}:{} deleted successfully!'.format(image,tag))
                 return
             else:
                 return res.raise_for_status()
@@ -96,7 +110,7 @@ class nexusHandler:
             raise
 
     def __imageExists(self,image):
-        return True if image in self.listRepos() else False
+        return True if image in self.available_repos else False
 
     def __tagExists(self,image,tag):
         if self.__imageExists(image):
@@ -105,7 +119,7 @@ class nexusHandler:
     def status_check(self):
         try:
             res = requests.get(self.status_endpoint,verify=self.secure)
-            self.logger.info('Configuration is valid!')
+            self.__logger.info('Configuration is valid!')
             if res.status_code != 200:
                 raise Exception('Config is wrong or {} is unreachable.\nError: {}'.format(self.base_url,str(res.reason)))
         except Exception as e:
@@ -150,30 +164,53 @@ class nexusHandler:
             try:
                 return requests.get(__manifest_url,verify=self.secure).json()
             except Exception as e:
-                self.logger.error('Image should be one of {}\n. Error: {}'.format(self.repos,str(e)))
+                self.__logger.error('Image should be one of {}\n. Error: {}'.format(self.available_repos,str(e)))
         else:
-            self.logger.error('Image should be one of {}'.format(self.repos))
+            self.__logger.error('Image should be one of {}'.format(self.available_repos))
             sys.exit(1)
+
+    # def __populateWithCreationDate(self,image,tag):
+    #     self.__tags_with_date[tag] = {}
+    #     self.__tags_with_date[tag]['CreatedDate'] = self.__getCreationDate(image, tag)
+    #     self.__logger.info('Fetched Date for {}:{}'.format(image,tag))
 
     def listTags(self,image=None):
-        if self.__imageExists(image):
-            __tags_url = '{}/repository/{}/v2/{}/tags/list'.format(self.base_url,self.repository,image)
-            try:
-                return requests.get(__tags_url,verify=self.secure).json()['tags']
-            except Exception as e:
-                self.logger.error('Could not fetch tags.\nError: {}'.format(str(e)))
-                sys.exit(1)
+        if self.__available_tags:
+            return self.__available_tags
         else:
-            self.logger.error('Image should be one of {}\n'.format(self.repos))
-            sys.exit(1)
+            if self.__imageExists(image):
+                __tags_url = '{}/repository/{}/v2/{}/tags/list'.format(self.base_url,self.repository,image)
+                try:
+                    self.__available_tags = requests.get(__tags_url,verify=self.secure).json()['tags']
+                    # # __threads = []
+                    #
+                    # for tag in self.__available_tags:
+                    #     t = threading.Thread(target=self.__populateWithCreationDate,args=(image,tag))
+                    #     # __threads.append(t)
+                    #     t.start()
+                    #     # __creationDate = self.__populateWithCreationDate(image, tag)
+                    #
+                    # main_thread = threading.main_thread()
+                    #
+                    # for __thread in threading.enumerate():
+                    #     if __thread is main_thread:
+                    #         continue
+                    #     __thread.join()
+                    #
+                    # print(self.__tags_with_date)
+                    return self.__available_tags
+                except Exception as e:
+                    self.__logger.error('Could not fetch tags.\nError: {}'.format(str(e)))
+                    sys.exit(1)
+            else:
+                self.__logger.error('Image should be one of {}\n'.format(self.available_repos))
+                sys.exit(1)
 
-    def listRepos(self):
+    def __listRepos(self):
         try:
-            res = requests.get(self.repos_url,verify=self.secure)
-            self.repos = res.json()['repositories']
-            return self.repos
+            return requests.get(self.repos_url,verify=self.secure).json()['repositories']
         except Exception as e:
-            self.logger.error('Could not fetch repos.\nError: {}'.format(str(e)))
+            self.__logger.error('Could not fetch repos.\nError: {}'.format(str(e)))
             sys.exit(1)
 
     def listComponents(self,all=True):
@@ -188,5 +225,5 @@ class nexusHandler:
                     self.components.append(item)
             return self.components
         except Exception as e:
-            self.logger.error('Could not handle request.\nError: {}'.format(str(e)))
+            self.__logger.error('Could not handle request.\nError: {}'.format(str(e)))
             sys.exit(1)

@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Allow imports from current working directory
 sys.path.append(os.path.abspath(os.path.curdir))
+# sys.setrecursionlimit(1500)
 
 def pretty_print(json_body):
     return json.dumps(json_body, indent=2, separators=(',', ': '))
@@ -23,10 +24,11 @@ def main():
 
     if args.subcommand == 'list-repos':
         print('Available Repos:')
-        for i in nexusClient.listRepos():
+        for i in nexusClient.available_repos:
             print('\t'+i)
     elif args.subcommand == 'list-tags':
-        print('Available Tags for {}:'.format(args.repo))
+        print('Number of Tags for {} : {}'.format(args.repo,len(nexusClient.listTags(args.repo))))
+        print('Available Tags for {} :'.format(args.repo))
         for i in nexusClient.listTags(args.repo):
             print('\t'+i)
     elif args.subcommand == 'get-component':
@@ -39,7 +41,7 @@ def main():
         elif args.tag:
             nexusClient.deleteImage(args.repo, args.tag)
     elif args.subcommand == 'search':
-        print(pretty_print(nexusClient.searchComponent(args.repo, args.tag)))
+        print(pretty_print(nexusClient.searchAsset(args.repo, args.tag)))
 
 
 if __name__ == '__main__':

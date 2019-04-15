@@ -8,8 +8,9 @@ class argParser(BaseConfig):
 
     def __init__(self):
         super().__init__()
-        self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
+        self.__logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
         self.__run()
+        self.__logger.info(self.debug)
         loggerInit(self.debug)
 
     def __run(self):

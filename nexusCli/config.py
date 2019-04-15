@@ -5,7 +5,7 @@ import base64
 from getpass import getpass
 from configparser import ConfigParser
 from pathlib import Path
-from logger import loggerInit
+from logger import loggerInit , preInit
 from distutils.util import strtobool
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,8 @@ class FileConfig(ConfigParser):
 
     def __init__(self):
         super().__init__()
-        loggerInit()
-        self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
+        self.__logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
+        self.__logger = preInit(self.__logger)
         self.__readConfigFromFile()
 
     def __generateDefaultConfig(self):
@@ -35,7 +35,7 @@ class FileConfig(ConfigParser):
         if self.base_config_file_path.is_file():
             self.read(self.base_config_file_path)
         else:
-            self.logger.warn('Configuration file {} does not exist. Use subcommand config to create the config file.'.format(self.base_config_file_path))
+            self.__logger.warn('Configuration file {} does not exist. Use subcommand config to create the config file.'.format(self.base_config_file_path))
             self.__generateDefaultConfig()
 
     def generateConfig(self,update=False,write_to_file=True):
@@ -44,17 +44,17 @@ class FileConfig(ConfigParser):
                 if update:
                     self.__getInputs()
                     self.__writeConfig()
-                    self.logger.info('Configuration file created under {}'.format(self.base_config_file_path))
+                    self.__logger.info('Configuration file created under {}'.format(self.base_config_file_path))
                     sys.exit(0)
                 else:
-                    self.logger.info('Configuration file exists. Use --update flag to override.')
+                    self.__logger.info('Configuration file exists. Use --update flag to override.')
                     print(self.base_config_file_path.read_text())
                     sys.exit(0)
             else:
-                self.logger.info('Configuration file does not exist. Creating...')
+                self.__logger.info('Configuration file does not exist. Creating...')
                 self.__getInputs()
                 self.__writeConfig()
-                self.logger.info('Configuration file created under {}'.format(self.base_config_file_path))
+                self.__logger.info('Configuration file created under {}'.format(self.base_config_file_path))
                 sys.exit(0)
         except Exception as e:
             raise Exception('Something went wrong creating the configuration file. Error: {}'.format(str(e)))
@@ -88,7 +88,6 @@ class BaseConfig(FileConfig):
 
     def __init__(self):
         super().__init__()
-        self.logger = logging.getLogger('{}.{}'.format(__name__,self.__class__.__name__))
         self.host = os.getenv('NEXUS_HOST', self['config']['host'])
         self.port = int(os.getenv('NEXUS_PORT', self['config']['port'])) if os.getenv('NEXUS_PORT', self['config']['port']) else None
         self.proto = os.getenv('NEXUS_PROTO', self['config']['proto'])
