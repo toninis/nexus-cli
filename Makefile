@@ -1,5 +1,5 @@
-VENV := $(shell which virtualenv)
-PYTHON3 := $(shell which python3)
+VENV ?= /usr/local/bin/virtualenv
+PYTHON3 ?= /usr/bin/python3
 PWD := $(shell pwd)
 
 .SILENT:
