@@ -7,7 +7,6 @@ import json
 import threading
 from requests.auth import HTTPBasicAuth
 
-
 def user_verification():
     reply = str(input('Are you sure ?? (yes/no) : '))
     if reply == 'yes':
@@ -51,7 +50,6 @@ class nexusHandler:
         self.components = []
         self.available_repos = self.__listRepos()
         self.__available_tags = []
-        # self.__tags_with_date = {}
 
     def deleteImageByDigest(self,image,tag):
         try:
@@ -169,11 +167,6 @@ class nexusHandler:
             self.__logger.error('Image should be one of {}'.format(self.available_repos))
             sys.exit(1)
 
-    # def __populateWithCreationDate(self,image,tag):
-    #     self.__tags_with_date[tag] = {}
-    #     self.__tags_with_date[tag]['CreatedDate'] = self.__getCreationDate(image, tag)
-    #     self.__logger.info('Fetched Date for {}:{}'.format(image,tag))
-
     def listTags(self,image=None):
         if self.__available_tags:
             return self.__available_tags
@@ -182,22 +175,6 @@ class nexusHandler:
                 __tags_url = '{}/repository/{}/v2/{}/tags/list'.format(self.base_url,self.repository,image)
                 try:
                     self.__available_tags = requests.get(__tags_url,verify=self.secure).json()['tags']
-                    # # __threads = []
-                    #
-                    # for tag in self.__available_tags:
-                    #     t = threading.Thread(target=self.__populateWithCreationDate,args=(image,tag))
-                    #     # __threads.append(t)
-                    #     t.start()
-                    #     # __creationDate = self.__populateWithCreationDate(image, tag)
-                    #
-                    # main_thread = threading.main_thread()
-                    #
-                    # for __thread in threading.enumerate():
-                    #     if __thread is main_thread:
-                    #         continue
-                    #     __thread.join()
-                    #
-                    # print(self.__tags_with_date)
                     return self.__available_tags
                 except Exception as e:
                     self.__logger.error('Could not fetch tags.\nError: {}'.format(str(e)))

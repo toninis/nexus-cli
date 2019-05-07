@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 # Allow imports from current working directory
 sys.path.append(os.path.abspath(os.path.curdir))
-# sys.setrecursionlimit(1500)
 
 def pretty_print(json_body):
     return json.dumps(json_body, indent=2, separators=(',', ': '))

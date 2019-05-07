@@ -1,7 +1,14 @@
 import argparse
 import logging
+from . import get_version_string
 from .config import BaseConfig
 from .logger import loggerInit
+
+DISPLAY_VERSION_MESSAGE = '''
+nexusCli 
+Version: {}'''.strip("\n").format(
+    get_version_string()
+)
 
 class argParser(BaseConfig):
     """docstring for argParser."""
@@ -24,10 +31,10 @@ class argParser(BaseConfig):
         subparsers = global_parser.add_subparsers(
             title='Available sub-commands',
             dest='subcommand'
-            # help='sub-command help'
         )
 
         global_parser.add_argument('--debug', help='Enable Debug Logging...' , action='store_true')
+        global_parser.add_argument('-V','--version',action='version',version=DISPLAY_VERSION_MESSAGE,help='Show the version of the engine and exit.')
         global_parser.add_argument('--host', help='Nexus Host')
         global_parser.add_argument('--port', help='Nexus Port')
         global_parser.add_argument('--repository', help='Nexus repository')
